@@ -1,4 +1,4 @@
-#------------------SHIP_Filter_Classification------------------------------
+#------------------SHIP_EDA_Preprocessing-----------------------------------
 #Dataset : SHIP
 #Team members: Mangaraj & Saha
 #Final Script V1
@@ -136,13 +136,14 @@ str(df)
 
 #-----------------Begin of: Preprocessing---------------------------------------
 
-#Phase1: Dataframe containing only numeric values
+#Phase1: Dataframe containing only numeric values : df_n
 
 #for CFS method we need the correlation matrix
 #the correlation matrix only takes numeric matrix as input
 #so we need to convert the dataset into numeric one
 
 df_n<-df
+str(df_n$stea_alt75_s0)
 View(colnames(df_n))
 export(df_n, "df_n.csv")
 #STEP1 : Deleting irrelavant columns such as date and time and id
@@ -172,6 +173,9 @@ df_n$stea_s2<-as.numeric(factor(df_n$stea_s2))
 df_n$mort_icd10_s0<-unfactor(df_n$mort_icd10_s0)
 df_n$mort_icd10_s0<-as.numeric(factor(df_n$mort_icd10_s0))
 
+str(df_n$sc_sondercodes_s0)
+df_n$sc_sondercodes_s0<-as.numeric(df_n$sc_sondercodes_s0)
+
 #STEP3 : Converting all factor types to numeric
 w_fac <- which( sapply( df_n, class ) == 'factor' )
 df_n[w_fac] <- lapply( df_n[w_fac], function(x) as.numeric(as.character(x)) )
@@ -190,6 +194,70 @@ for(i in 1:nrow(df_n)){
   else
     df_n$liver_fat[i] <- 1
 }
+export(df_n, "allnumeric.rds")
+#corr<-cor(df_n, use = "pairwise.complete.obs", method = "spearman")
 
-corr<-cor(df_n, use = "pairwise.complete.obs", method = "spearman")
+#----------------------------------------------------------------------
+
+#Phase2: Dataframe containing numeric, factor and integer values : df_nf
+#Random Forest and Naive Bayes
+df_nf<-data.frame(dataset1)
+
+#keeping only labeled data
+df_nf <- df_nf[!is.na(df_nf$liver_fat),]
+NROW(df)
+
+#converting the value numerical values of liver fat to categorical
+for(i in 1:nrow(df_nf)){
+  if(df_nf$liver_fat[i]  < 10){
+    df_nf$liver_fat[i] <- 0
+  }
+  else
+    df_nf$liver_fat[i] <- 1
+}
+
+df_nf$liver_fat<-as.character(df$liver_fat)
+df_nf$liver_fat<-as.numeric(df$liver_fat)
+
+#deleting irrelevant columns
+df_nf$blt_beg_s0<-NULL
+df_nf$blt_beg_s1<-NULL
+df_nf$blt_beg_s2<-NULL
+df_nf$exdate_ship_s0<-NULL
+df_nf$exdate_ship_s1<-NULL
+df_nf$exdate_ship_s2<-NULL
+df_nf$zz_nr<-NULL
+df_nf$exdate_ship0_s0<-NULL
+
+#converting all integer values to numeric
+w_num <- which( sapply( df_nf, class ) == 'integer' )
+df_nf[w_num] <- lapply( df_nf[w_num], function(x) as.numeric(x) )
+str(df_nf)
+
+#converting numeric into categorical values
+str(df_nf$age_ship0_s0)
+
+w_cat <- which( sapply( df_nf, class ) == 'numeric' )
+df_nf[w_cat] <- lapply( df_nf[w_cat], function(x) 
+                cut(x, breaks = 2, labels = c("0","1")))
+str(df_nf)
+
+#replacing missing values by "none"
+df_nf=as.matrix(df_nf)
+df_nf[is.na(df_nf)] <-"None"
+df_nf=as.data.frame(df_nf)
+
+df_nf$liver_fat<-dataset1$liver_fat
+str(df_nf$liver_fat)
+df_nf$liver_fat<-as.factor(df_nf$liver_fat)
+
+export(df_nf, "allfactor.rds")
+export(df_nf, "allfactor.csv")
+
+table(df_nf$liver_fat)
+#rf2<- randomForest(liver_fat~.,data = df_nf)
+
+#-------------------------------------------------------------------------------
+
 #-----------------End of: Preprocessing-----------------------------------------
+
